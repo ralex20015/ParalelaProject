@@ -17,8 +17,6 @@ public class MyWindow extends JFrame implements ActionListener {
     private final int numberOfCores = 8;
     private ForkJoinPool forkJoinPool= new ForkJoinPool(numberOfCores);
 
-    private boolean hasText;
-
     public MyWindow(){
         initComponents();
         cleanAll();
@@ -59,6 +57,8 @@ public class MyWindow extends JFrame implements ActionListener {
                 btnExecuteService.getPreferredSize().height);
         areaUnorderedWords.setBounds(20,60,270,420);
         areaOrderedWords.setBounds(340,60,270,420);
+        areaUnorderedWords.setEditable(false);
+        areaOrderedWords.setEditable(false);
 
         setSize(650,600);
         setLayout(null);
@@ -133,8 +133,8 @@ public class MyWindow extends JFrame implements ActionListener {
             setTextOnAreaComponent(areaOrderedWords,copy);
         }
         if (action.equals("Fork")){
-            //cleanAll();
-            //setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
+            cleanAll();
+            setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
             String[] copy = arrayOfWords.clone();
             lblFork.setText(forkProcess(copy)+ " ns");
             setTextOnAreaComponent(areaOrderedWords,copy);
@@ -144,8 +144,8 @@ public class MyWindow extends JFrame implements ActionListener {
     private long sequentialProcess(String[] array)
     {
         long startTime = System.nanoTime();
-        Words words = new Words(array, 0, array.length - 1);
-        words.sort();
+        WordSort words = new WordSort();
+        words.sort(array, 0, array.length - 1);
         return System.nanoTime() - startTime;
     }
 
@@ -153,8 +153,8 @@ public class MyWindow extends JFrame implements ActionListener {
     {
         long startTime = System.nanoTime();
         Runnable r = () -> {
-            Words merge = new Words(array, 0, array.length - 1);
-            merge.sort();
+           // WordSort merge = new WordSort(array, 0, array.length - 1);
+            //merge.sort();
         };
         ExecutorService executor = Executors.newFixedThreadPool(numberOfCores);
         executor.execute(r);
@@ -166,16 +166,8 @@ public class MyWindow extends JFrame implements ActionListener {
     {
         long startTime = System.nanoTime();
 
-        Runnable r = new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                Words words = new Words(array, 0, array.length - 1);
-                words.sort();
-            }
-        };
-        forkJoinPool.execute(r);
+        ForkJoin forkJoin = new ForkJoin(array,0,array.length -1);
+        forkJoinPool.invoke(forkJoin);
 
         return System.nanoTime() - startTime;
     }
