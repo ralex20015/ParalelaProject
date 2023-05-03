@@ -44,14 +44,35 @@ public class WordSort {
         //Ordenamiento.
         while (i < n1 && j < n2)
         {
-            if (leftArray[i].charAt(0) <= rightArray[j].charAt(0))
-            {
-                arr[k] = leftArray[i];
-                i++;
-            } else
-            {
-                arr[k] = rightArray[j];
-                j++;
+            int lengthOfWordOnLeftSide = leftArray[i].length();
+            int lengthOfWordOnRightSide = rightArray[j].length();
+            int minor = Math.min(lengthOfWordOnLeftSide,lengthOfWordOnRightSide);
+            System.out.println("Largo izquierdo: "+leftArray[i]);
+
+            System.out.println("Largo derecho: "+rightArray[j]);
+
+            for (int l = 0; l < minor; l++) {
+                if (leftArray[i].charAt(l) < rightArray[j].charAt(l))
+                {
+                    arr[k] = leftArray[i];
+                    i++;
+                    break;
+                } else if (leftArray[i].charAt(l) == rightArray[j].charAt(l)) {
+                    if (l + 1 == minor){
+                        if (leftArray[i].length() < rightArray[j].length())
+                        {
+                            arr[k] = leftArray[i];
+                            i++;
+                        }else {
+                            arr[k] = rightArray[j];
+                            j++;
+                        }
+                    }
+                } else{
+                    arr[k] = rightArray[j];
+                    j++;
+                    break;
+                }
             }
             k++;
         }//Fin del while.

@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
@@ -16,6 +17,7 @@ public class MyWindow extends JFrame implements ActionListener {
     private String [] arrayOfWords;
     private final int numberOfCores = 8;
     private ForkJoinPool forkJoinPool= new ForkJoinPool(numberOfCores);
+    private boolean hasText;
 
     public MyWindow(){
         initComponents();
@@ -33,13 +35,13 @@ public class MyWindow extends JFrame implements ActionListener {
         sp2.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         areaUnorderedWords.setBackground(new Color(230,128,65));
         areaOrderedWords.setBackground(new Color(230,128,65));
-        btnAdd = new JButton("Agregar datos");
+        btnAdd = new JButton("Agregar texto");
         btnSequential = new JButton("Secuencial");
         btnSequential.setActionCommand("Add");
         btnClean = new JButton("Limpiar");
         btnForkJoin = new JButton("Fork/Join");
         btnExecuteService = new JButton("Execute Service");
-        JLabel label = new JLabel("Ingrese el texto: ");
+        JLabel label = new JLabel("Texto sin ordenar ");
         lblSequential = new JLabel("as");
         lblFork = new JLabel("asd");
         lblExecutor = new JLabel("asdas");
@@ -48,19 +50,20 @@ public class MyWindow extends JFrame implements ActionListener {
         label.setBounds(20,20,label.getPreferredSize().width+20,label.getPreferredSize().height);
         lblSequential.setBounds(400,0,100,30);
         lblFork.setBounds(500,0,100,30);
+        lblExecutor.setBounds(630,0,100,30);
         //txtAmountOfNumbers.setBounds(140,15,200,30);
         btnAdd.setBounds(20,500,btnAdd.getPreferredSize().width,btnAdd.getPreferredSize().height);
         btnSequential.setBounds(150 ,500, btnSequential.getPreferredSize().width, btnSequential.getPreferredSize().height);
-        btnClean.setBounds(245 ,500,btnClean.getPreferredSize().width,btnClean.getPreferredSize().height);
-        btnForkJoin.setBounds(335 ,500,120,btnForkJoin.getPreferredSize().height);
-        btnExecuteService.setBounds(470 ,500,btnExecuteService.getPreferredSize().width + 20,
+        btnClean.setBounds(265 ,500,btnClean.getPreferredSize().width,btnClean.getPreferredSize().height);
+        btnForkJoin.setBounds(350 ,500,120,btnForkJoin.getPreferredSize().height);
+        btnExecuteService.setBounds(490 ,500,btnExecuteService.getPreferredSize().width + 20,
                 btnExecuteService.getPreferredSize().height);
         areaUnorderedWords.setBounds(20,60,270,420);
         areaOrderedWords.setBounds(340,60,270,420);
         areaUnorderedWords.setEditable(false);
         areaOrderedWords.setEditable(false);
 
-        setSize(650,600);
+        setSize(700,600);
         setLayout(null);
         setResizable(false);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -73,6 +76,10 @@ public class MyWindow extends JFrame implements ActionListener {
         btnSequential.setActionCommand("Sequential");
         btnForkJoin.addActionListener(this);
         btnForkJoin.setActionCommand("Fork");
+        btnExecuteService.addActionListener(this);
+        btnExecuteService.setActionCommand("Executor");
+        btnClean.addActionListener(this);
+        btnClean.setActionCommand("Clean");
 
         add(label);
         //add(txtAmountOfNumbers);
@@ -85,6 +92,7 @@ public class MyWindow extends JFrame implements ActionListener {
         add(sp2);
         add(lblSequential);
         add(lblFork);
+        add(lblExecutor);
     }
 
     private void cleanAll(){
@@ -99,20 +107,29 @@ public class MyWindow extends JFrame implements ActionListener {
         String text = JOptionPane.showInputDialog(null,
                 "Ingresa el texto que deseas:");
         if(text!=null){
-            if(!text.equals("")){
+            if (!text.equals("") && hasText){
+                int conta = 0;
+                String [] temp = Arrays.copyOf(arrayOfWords, arrayOfWords.length + text.split(" ").length);
+                for (int i = arrayOfWords.length; i < temp.length ;conta++, i++) {
+                    temp[i] = text.split(" ")[conta];
+                }
+                arrayOfWords = temp;
+            }
+            if(!text.equals("") && !hasText){
                 arrayOfWords = text.split(" ");
+                hasText = true;
             }
         }
         setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
     }
 
     private void setTextOnAreaComponent(JTextArea textArea, String []arrayOfWords){
-        for (int i = 1; i < arrayOfWords.length; i++)
+        for (int i = 0; i < arrayOfWords.length; i++)
         {
-            if (i % 5 == 0){
+            if (i % 4 == 0){
                 textArea.append("\n");
             }
-            textArea.append(arrayOfWords[i - 1] + " ");
+            textArea.append(arrayOfWords[i] + " ");
         }
     }
 
@@ -139,6 +156,18 @@ public class MyWindow extends JFrame implements ActionListener {
             lblFork.setText(forkProcess(copy)+ " ns");
             setTextOnAreaComponent(areaOrderedWords,copy);
         }
+
+        if (action.equals("Executor")){
+            cleanAll();
+            setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
+            String[] copy = arrayOfWords.clone();
+            lblExecutor.setText(executorProcess(copy)+ " ns");
+            setTextOnAreaComponent(areaOrderedWords,copy);
+        }
+
+        if (action.equals("Clean")){
+            clean();
+        }
     }
 
     private long sequentialProcess(String[] array)
@@ -153,8 +182,8 @@ public class MyWindow extends JFrame implements ActionListener {
     {
         long startTime = System.nanoTime();
         Runnable r = () -> {
-           // WordSort merge = new WordSort(array, 0, array.length - 1);
-            //merge.sort();
+            WordSort words = new WordSort();
+            words.sort(array,0,array.length-1);
         };
         ExecutorService executor = Executors.newFixedThreadPool(numberOfCores);
         executor.execute(r);
@@ -170,5 +199,11 @@ public class MyWindow extends JFrame implements ActionListener {
         forkJoinPool.invoke(forkJoin);
 
         return System.nanoTime() - startTime;
+    }
+
+    private void clean(){
+        cleanAll();
+        arrayOfWords = null;
+        hasText = false;
     }
 }
