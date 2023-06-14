@@ -1,7 +1,7 @@
 public class WordSort {
 
 
-    public void sort(String []array, int lo, int hi)
+    public synchronized void sort(String []array, int lo, int hi)
     {
         if (lo < hi)
         {
@@ -16,7 +16,7 @@ public class WordSort {
         }
     }
 
-    public void merge(String[] arr, int left, int middle, int right)
+    public synchronized void  merge(String[] arr, int left, int middle, int right)
     {
         //Encuentra el tamaño de los sub-vectores para unirlos.
         int n1 = middle - left + 1;
@@ -33,7 +33,9 @@ public class WordSort {
         }
         for (int j = 0; j < n2; j++)
         {
-            rightArray[j] = arr[middle + j + 1];
+            if (middle + j + 1 != arr.length) {
+                rightArray[j] = arr[middle + j + 1];
+            }
         }
 
         int i = 0, j = 0;
@@ -47,9 +49,6 @@ public class WordSort {
             int lengthOfWordOnLeftSide = leftArray[i].length();
             int lengthOfWordOnRightSide = rightArray[j].length();
             int minor = Math.min(lengthOfWordOnLeftSide,lengthOfWordOnRightSide);
-            System.out.println("Largo izquierdo: "+leftArray[i]);
-
-            System.out.println("Largo derecho: "+rightArray[j]);
 
             for (int l = 0; l < minor; l++) {
                 if (leftArray[i].charAt(l) < rightArray[j].charAt(l))

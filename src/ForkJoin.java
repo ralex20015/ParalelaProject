@@ -4,26 +4,30 @@ public class ForkJoin extends RecursiveAction {
 
     private WordSort words = new WordSort();
     private final String[] arrayOfWords;
-    private final int lo;
-    private final int hi;
+    private final int startFromWord;
+    private final int totalWords;
 
     public ForkJoin(String[] a, int lo, int hi)
     {
         this.arrayOfWords = a;
-        this.lo = lo;
-        this.hi = hi;
+        this.startFromWord = lo;
+        this.totalWords = hi;
+        System.out.println(lo);
+        System.out.println(hi);
     }
 
     @Override
     protected void compute()
     {
-        if (lo < hi)
+        if (totalWords < 10000 || totalWords == startFromWord)
         {
-            int mid = lo + (hi - lo) / 2;
-            ForkJoin left = new ForkJoin(arrayOfWords, lo, mid);
-            ForkJoin right = new ForkJoin(arrayOfWords, mid + 1, hi);
-            invokeAll(left, right);
-            words.merge(this.arrayOfWords, this.lo, mid, this.hi);
+            words.sort(arrayOfWords,0,totalWords);
+            return;
         }
+        int mid = startFromWord + (totalWords - startFromWord) / 2;
+        ForkJoin left = new ForkJoin(arrayOfWords, startFromWord, mid);
+        ForkJoin right = new ForkJoin(arrayOfWords, mid + 1, totalWords);
+        words.merge(this.arrayOfWords,this.startFromWord,mid,this.totalWords);
+        invokeAll(left, right);
     }
 }
