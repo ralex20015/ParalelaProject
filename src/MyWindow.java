@@ -125,7 +125,7 @@ public class MyWindow extends JFrame implements ActionListener {
 //            arrayOfWords = Arrays.copyOf(server.getCurrentWords(),server.getCurrentWords().length);
             arrayOfWords = server.getCurrentWords().clone();
         }
-        if (arrayOfWords != null) {
+        if (arrayOfWords != null && server.getCurrentWords() != null) {
             if (server.getCurrentWords().length > arrayOfWords.length){
 //                arrayOfWords = Arrays.copyOf(server.getCurrentWords(),server.getCurrentWords().length);
                 arrayOfWords = server.getCurrentWords().clone();
