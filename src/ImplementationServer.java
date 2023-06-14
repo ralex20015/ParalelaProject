@@ -46,6 +46,11 @@ public class ImplementationServer extends UnicastRemoteObject implements IServer
     }
 
     @Override
+    public String [] getCurrentWords() {
+        return arrayOfWords;
+    }
+
+    @Override
     public void limpiar(String nameOfWindow) throws RemoteException {
 
     }

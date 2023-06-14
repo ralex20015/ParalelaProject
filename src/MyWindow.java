@@ -12,7 +12,7 @@ public class MyWindow extends JFrame implements ActionListener {
 
     //private final JTextField txtAmountOfNumbers;
     private JTextArea areaUnorderedWords, areaOrderedWords;
-    private JButton btnAdd, btnSequential, btnForkJoin, btnClean, btnExecuteService;
+    private JButton btnAdd, btnSequential, btnForkJoin, btnClean, btnExecuteService, btnSendTextToServer;
 
     private JLabel lblExecutor, lblFork, lblSequential, lblQuantityOfWords;
     private String [] arrayOfWords;
@@ -48,6 +48,7 @@ public class MyWindow extends JFrame implements ActionListener {
         btnClean = new JButton("Limpiar");
         btnForkJoin = new JButton("Fork/Join");
         btnExecuteService = new JButton("Execute Service");
+        btnSendTextToServer = new JButton("Send Text");
         JLabel label = new JLabel("Texto sin ordenar ");
         JLabel lblOrdenado = new JLabel("Texto ordenado");
         lblOrdenado.setFont(font);
@@ -65,12 +66,14 @@ public class MyWindow extends JFrame implements ActionListener {
         lblFork.setBounds(500,0,100,30);
         lblExecutor.setBounds(590,0,100,30);
         //txtAmountOfNumbers.setBounds(140,15,200,30);
-        btnAdd.setBounds(20,600,btnAdd.getPreferredSize().width,btnAdd.getPreferredSize().height);
-        btnSequential.setBounds(150 ,600, btnSequential.getPreferredSize().width, btnSequential.getPreferredSize().height);
-        btnClean.setBounds(265 ,600,btnClean.getPreferredSize().width,btnClean.getPreferredSize().height);
-        btnForkJoin.setBounds(350 ,600,120,btnForkJoin.getPreferredSize().height);
-        btnExecuteService.setBounds(490 ,600,btnExecuteService.getPreferredSize().width + 20,
+        btnAdd.setBounds(20,580,btnAdd.getPreferredSize().width,btnAdd.getPreferredSize().height);
+        btnSequential.setBounds(150 ,580, btnSequential.getPreferredSize().width, btnSequential.getPreferredSize().height);
+        btnClean.setBounds(265 ,580,btnClean.getPreferredSize().width,btnClean.getPreferredSize().height);
+        btnForkJoin.setBounds(350 ,580,120,btnForkJoin.getPreferredSize().height);
+        btnExecuteService.setBounds(490 ,580,btnExecuteService.getPreferredSize().width + 20,
                 btnExecuteService.getPreferredSize().height);
+        btnSendTextToServer.setBounds(20,620,btnSendTextToServer.getPreferredSize().width + 20,
+                btnSendTextToServer.getPreferredSize().height);
         areaUnorderedWords.setBounds(20,160,270,420);
         areaOrderedWords.setBounds(340,160,270,420);
         areaUnorderedWords.setEditable(false);
@@ -95,9 +98,12 @@ public class MyWindow extends JFrame implements ActionListener {
         btnExecuteService.setActionCommand("Executor");
         btnClean.addActionListener(this);
         btnClean.setActionCommand("Clean");
+        btnSendTextToServer.addActionListener(this);
+        btnSendTextToServer.setActionCommand("Send");
 
         add(label);
         add(btnAdd);
+        add(btnSendTextToServer);
         add(btnSequential);
         add(btnClean);
         add(btnForkJoin);
@@ -109,17 +115,37 @@ public class MyWindow extends JFrame implements ActionListener {
         add(lblExecutor);
         add(lblQuantityOfWords);
         add(lblOrdenado);
+        serviceForGettingTheArrayOfWords();
     }
 
     private void cleanAll(){
         areaUnorderedWords.setText("");
         areaOrderedWords.setText("");
-//        lblExecutor.setText("");
-//        lblFork.setText("");
-//        lblSequential.setText("");
+    }
+    private void serviceForGettingTheArrayOfWords(){
+        while (true){
+            try {
+                Thread.sleep(500);
+                getArray();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+    private void getArray() throws RemoteException {
+        if (arrayOfWords == null && server.getCurrentWords() != null){
+            arrayOfWords = server.getCurrentWords().clone();
+        }
+        if (arrayOfWords != null) {
+            if (server.getCurrentWords().length > arrayOfWords.length){
+                arrayOfWords = server.getCurrentWords().clone();
+            }
+        }
+        setTextOnAreaComponent(areaUnorderedWords,arrayOfWords);
     }
 
-    private void generateArrayOfWords() throws RemoteException {
+
+    private void appendWords() throws RemoteException {
         String text = JOptionPane.showInputDialog(null,
                 "Ingresa el texto que deseas:");
 //        if(text!=null){
@@ -138,21 +164,30 @@ public class MyWindow extends JFrame implements ActionListener {
 //        }
         if (text != null){
             server.appendTextToServer(text,nameOfWindow);
-        }else {
-            JOptionPane.showMessageDialog(this,"Debe ingresar un texto!");
+        }else{
+            JOptionPane.showMessageDialog(this,
+                    "Debe ingresar el texto");
         }
-
-        lblQuantityOfWords.setText("Total palabras: "+arrayOfWords.length);
-        setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
+//        setTextOnAreaComponent(areaUnorderedWords,arrayOfWords);
+//        lblQuantityOfWords.setText(text);
     }
 
     private void setTextOnAreaComponent(JTextArea textArea, String []arrayOfWords){
-        for (int i = 0; i < arrayOfWords.length; i++)
-        {
-            if (i % 3 == 0){
-                textArea.append("\n");
+        if (arrayOfWords != null){
+            StringBuilder text = new StringBuilder();
+            for (int i = 0; i < arrayOfWords.length; i++)
+            {
+                if (i % 3 == 0){
+                    text.append("\n");
+                }
+                text.append(arrayOfWords[i]);
+                text.append(" ");
             }
-            textArea.append(arrayOfWords[i] + " ");
+            textArea.setText(text.toString());
+            lblQuantityOfWords.setText("Total de palabras: "+arrayOfWords.length);
+        }else{
+            textArea.setText("");
+            lblQuantityOfWords.setText("Total de palabras: "+0);
         }
     }
 
@@ -162,36 +197,39 @@ public class MyWindow extends JFrame implements ActionListener {
         String action = e.getActionCommand();
         if (action.equals("Add")){
             cleanAll();
-            //
-            // generateArrayOfWords();
+            try {
+                appendWords();
+            } catch (RemoteException ex) {
+                throw new RuntimeException(ex);
+            }
         }
-        if (action.equals("Sequential")){
-            cleanAll();
-            setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
-
-            String[] copy = arrayOfWords.clone();
-            String time = "<html>Secuencial<br>"+sequentialProcess(copy) + " ns"+"</html>";
-            lblSequential.setText(time);
-            setTextOnAreaComponent(areaOrderedWords,copy);
-        }
-        if (action.equals("Fork")){
-            cleanAll();
-            setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
-            String[] copy = arrayOfWords.clone();
-            String time = "<html>Fork<br>"+forkProcess(copy) + " ns"+"</html>";
-            lblFork.setText(time);
-            setTextOnAreaComponent(areaOrderedWords,copy);
-        }
-
-        if (action.equals("Executor")){
-            cleanAll();
-            setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
-            String[] copy = arrayOfWords.clone();
-            String time = "<html>Executor<br>"+executorProcess(copy) + " ns"+"</html>";
-
-            lblExecutor.setText(time);
-            setTextOnAreaComponent(areaOrderedWords,copy);
-        }
+//        if (action.equals("Sequential")){
+//            cleanAll();
+//            setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
+//
+//            String[] copy = arrayOfWords.clone();
+//            String time = "<html>Secuencial<br>"+sequentialProcess(copy) + " ns"+"</html>";
+//            lblSequential.setText(time);
+//            setTextOnAreaComponent(areaOrderedWords,copy);
+//        }
+//        if (action.equals("Fork")){
+//            cleanAll();
+//            setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
+//            String[] copy = arrayOfWords.clone();
+//            String time = "<html>Fork<br>"+forkProcess(copy) + " ns"+"</html>";
+//            lblFork.setText(time);
+//            setTextOnAreaComponent(areaOrderedWords,copy);
+//        }
+//
+//        if (action.equals("Executor")){
+//            cleanAll();
+//            setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
+//            String[] copy = arrayOfWords.clone();
+//            String time = "<html>Executor<br>"+executorProcess(copy) + " ns"+"</html>";
+//
+//            lblExecutor.setText(time);
+//            setTextOnAreaComponent(areaOrderedWords,copy);
+//        }
 
         if (action.equals("Clean")){
             clean();
