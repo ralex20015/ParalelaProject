@@ -4,7 +4,7 @@ import java.rmi.registry.Registry;
 
 public class Client {
 
-    private static String HOST = "localhost";
+    private static String HOST = "192.168.1.66";
     private static int PORT = 1005;
 
     public static void main(String[] args) {

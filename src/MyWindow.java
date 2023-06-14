@@ -131,6 +131,9 @@ public class MyWindow extends JFrame implements ActionListener {
                 arrayOfWords = server.getCurrentWords().clone();
             }
         }
+        if (server.getCurrentWords() == null){
+            arrayOfWords = null;
+        }
         setTextOnAreaComponent(areaUnorderedWords,arrayOfWords);
     }
 
