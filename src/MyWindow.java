@@ -4,9 +4,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.rmi.RemoteException;
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
 
 public class MyWindow extends JFrame implements ActionListener {
 
@@ -16,9 +13,6 @@ public class MyWindow extends JFrame implements ActionListener {
 
     private JLabel lblExecutor, lblFork, lblSequential, lblQuantityOfWords;
     private String [] arrayOfWords;
-    private final int numberOfCores = 8;
-    private ForkJoinPool forkJoinPool= new ForkJoinPool(numberOfCores);
-    private boolean hasText;
     private Font font = new Font("Segoe UI", Font.PLAIN, 18);
     private IServer server;
     private String nameOfWindow;
@@ -28,10 +22,9 @@ public class MyWindow extends JFrame implements ActionListener {
         this.nameOfWindow = nameOfWindow;
         initComponents();
         cleanAll();
-        server.registerWindow(this);
     }
 
-    public void initComponents(){
+    public void initComponents() throws RemoteException {
         areaUnorderedWords = new JTextArea();
         areaOrderedWords = new JTextArea();
         JScrollPane sp = new JScrollPane(areaUnorderedWords);
@@ -115,6 +108,7 @@ public class MyWindow extends JFrame implements ActionListener {
         add(lblExecutor);
         add(lblQuantityOfWords);
         add(lblOrdenado);
+        server.registerWindow(this);
         serviceForGettingTheArrayOfWords();
     }
 
@@ -134,11 +128,11 @@ public class MyWindow extends JFrame implements ActionListener {
     }
     private void getArray() throws RemoteException {
         if (arrayOfWords == null && server.getCurrentWords() != null){
-            arrayOfWords = server.getCurrentWords().clone();
+            arrayOfWords = Arrays.copyOf(server.getCurrentWords(),server.getCurrentWords().length);
         }
         if (arrayOfWords != null) {
             if (server.getCurrentWords().length > arrayOfWords.length){
-                arrayOfWords = server.getCurrentWords().clone();
+                arrayOfWords = Arrays.copyOf(server.getCurrentWords(),server.getCurrentWords().length);
             }
         }
         setTextOnAreaComponent(areaUnorderedWords,arrayOfWords);
@@ -148,28 +142,13 @@ public class MyWindow extends JFrame implements ActionListener {
     private void appendWords() throws RemoteException {
         String text = JOptionPane.showInputDialog(null,
                 "Ingresa el texto que deseas:");
-//        if(text!=null){
-//            if (!text.equals("") && hasText){
-//                int conta = 0;
-//                String [] temp = Arrays.copyOf(arrayOfWords, arrayOfWords.length + text.split(" ").length);
-//                for (int i = arrayOfWords.length; i < temp.length ;conta++, i++) {
-//                    temp[i] = text.split(" ")[conta];
-//                }
-//                arrayOfWords = temp;
-//            }
-//            if(!text.equals("") && !hasText){
-//                arrayOfWords = text.split(" ");
-//                hasText = true;
-//            }
-//        }
+
         if (text != null){
-            server.appendTextToServer(text,nameOfWindow);
+            server.appendTextToServer(text);
         }else{
             JOptionPane.showMessageDialog(this,
                     "Debe ingresar el texto");
         }
-//        setTextOnAreaComponent(areaUnorderedWords,arrayOfWords);
-//        lblQuantityOfWords.setText(text);
     }
 
     private void setTextOnAreaComponent(JTextArea textArea, String []arrayOfWords){
@@ -203,86 +182,56 @@ public class MyWindow extends JFrame implements ActionListener {
                 throw new RuntimeException(ex);
             }
         }
-//        if (action.equals("Sequential")){
-//            cleanAll();
-//            setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
+        if (action.equals("Sequential")){
+            String time = null;
+            try {
+                Data data = server.getResult("Sequential",nameOfWindow);
+                time = "<html>Secuencial<br>"+ data.getTime()+ " ns"+"</html>";
+                setTextOnAreaComponent(areaOrderedWords, data.getArrayOfOrderedWords());
+
+            } catch (RemoteException ex) {
+                throw new RuntimeException(ex);
+            }
+            lblSequential.setText(time);
+        }
+            if (action.equals("Fork")){
+              String time = null;
+                try {
+                    Data data = server.getResult("Fork",nameOfWindow);
+                    time = "<html>Fork<br>"+ data.getTime()+ " ns"+"</html>";
+                    setTextOnAreaComponent(areaOrderedWords, data.getArrayOfOrderedWords());
+
+                } catch (RemoteException ex) {
+                    throw new RuntimeException(ex);
+                }
+                lblSequential.setText(time);
+            }
 //
-//            String[] copy = arrayOfWords.clone();
-//            String time = "<html>Secuencial<br>"+sequentialProcess(copy) + " ns"+"</html>";
-//            lblSequential.setText(time);
-//            setTextOnAreaComponent(areaOrderedWords,copy);
-//        }
-//        if (action.equals("Fork")){
-//            cleanAll();
-//            setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
-//            String[] copy = arrayOfWords.clone();
-//            String time = "<html>Fork<br>"+forkProcess(copy) + " ns"+"</html>";
-//            lblFork.setText(time);
-//            setTextOnAreaComponent(areaOrderedWords,copy);
-//        }
-//
-//        if (action.equals("Executor")){
-//            cleanAll();
-//            setTextOnAreaComponent(areaUnorderedWords, arrayOfWords);
-//            String[] copy = arrayOfWords.clone();
-//            String time = "<html>Executor<br>"+executorProcess(copy) + " ns"+"</html>";
-//
-//            lblExecutor.setText(time);
-//            setTextOnAreaComponent(areaOrderedWords,copy);
-//        }
+        if (action.equals("Executor")){
+            String time = null;
+            try {
+                Data data = server.getResult("Executor",nameOfWindow);
+                time = "<html>Executor<br>"+ data.getTime()+ " ns"+"</html>";
+                setTextOnAreaComponent(areaOrderedWords, data.getArrayOfOrderedWords());
+
+            } catch (RemoteException ex) {
+                throw new RuntimeException(ex);
+            }
+            lblSequential.setText(time);
+        }
 
         if (action.equals("Clean")){
             clean();
         }
     }
-
-    private long sequentialProcess(String[] array)
-    {
-        long startTime = System.nanoTime();
-                                                                                                                                                System.out.println();
-        WordSort words = new WordSort();
-        words.sort(array, 0, array.length - 1);
-        return System.nanoTime() - startTime;
-    }
-
-    private long executorProcess(String[] array)
-    {
-        // número de hilos que se utilizarán para ordenar
-        int wordsPerThread = array.length / numberOfCores;
-        ExecutorService executor = Executors.newFixedThreadPool(numberOfCores);
-
-        for (int i = 0; i < numberOfCores; i++) {
-            int start = i * wordsPerThread;
-            int end = (i == numberOfCores- 1) ? array.length : (i + 1) * wordsPerThread;
-
-            Runnable task = new MyExecutor(array, start, end);
-            executor.execute(task);
-        }
-        long startTime = System.nanoTime();
-
-        executor.shutdown();
-
-        WordSort wordSort = new WordSort();
-        wordSort.sort(array,0,array.length - 1);
-
-        return System.nanoTime() - startTime;
-    }
-
-
-    private long forkProcess(String[] array)
-    {
-        ForkJoin forkJoin = new ForkJoin(array,0,array.length -1);
-        long startTime = System.nanoTime();
-        forkJoinPool.invoke(forkJoin);
-        return System.nanoTime() - startTime;
-    }
-
-    private void clean(){
+    public void clean(){
         cleanAll();
         arrayOfWords = null;
-        hasText = false;
         lblExecutor.setText("");
         lblFork.setText("");
         lblExecutor.setText("");
+    }
+    public String getNameOfTheWindow() {
+        return nameOfWindow;
     }
 }
