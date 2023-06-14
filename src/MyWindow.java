@@ -185,37 +185,44 @@ public class MyWindow extends JFrame implements ActionListener {
             String time = null;
             try {
                 Data data = server.getResult("Sequential",nameOfWindow);
-                time = "<html>Secuencial<br>"+ data.getTime()+ " ns"+"</html>";
-                setTextOnAreaComponent(areaOrderedWords, data.getArrayOfOrderedWords());
+                if (data != null){
+                    time = "<html>Secuencial<br>"+ data.getTime()+ " ns"+"</html>";
+                    setTextOnAreaComponent(areaOrderedWords, data.getArrayOfOrderedWords());
+                    lblSequential.setText(time);
+                }
 
             } catch (RemoteException ex) {
                 throw new RuntimeException(ex);
             }
-            lblSequential.setText(time);
         }
             if (action.equals("Fork")){
               String time = null;
                 try {
                     Data data = server.getResult("Fork",nameOfWindow);
-                    time = "<html>Fork<br>"+ data.getTime()+ " ns"+"</html>";
-                    setTextOnAreaComponent(areaOrderedWords, data.getArrayOfOrderedWords());
+                    if (data != null){
+                        time = "<html>Fork<br>"+ data.getTime()+ " ns"+"</html>";
+                        setTextOnAreaComponent(areaOrderedWords, data.getArrayOfOrderedWords());
+                        lblFork.setText(time);
+                    }
 
                 } catch (RemoteException ex) {
                     throw new RuntimeException(ex);
                 }
-                lblFork.setText(time);
             }
 
         if (action.equals("Executor")){
             String time = null;
             try {
                 Data data = server.getResult("Executor",nameOfWindow);
-                time = "<html>Executor<br>"+ data.getTime()+ " ns"+"</html>";
-                setTextOnAreaComponent(areaOrderedWords, data.getArrayOfOrderedWords());
+                if (data != null){
+                    time = "<html>Executor<br>"+ data.getTime()+ " ns"+"</html>";
+                    setTextOnAreaComponent(areaOrderedWords, data.getArrayOfOrderedWords());
+                    lblExecutor.setText(time);
+                }
+
             } catch (RemoteException ex) {
                 throw new RuntimeException(ex);
             }
-            lblExecutor.setText(time);
         }
 
         if (action.equals("Clean")){
