@@ -33,9 +33,7 @@ public class WordSort {
         }
         for (int j = 0; j < n2; j++)
         {
-            if (middle + j + 1 != arr.length) {
-                rightArray[j] = arr[middle + j + 1];
-            }
+            rightArray[j] = arr[middle + j + 1];
         }
 
         int i = 0, j = 0;

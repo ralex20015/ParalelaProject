@@ -2,7 +2,6 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
@@ -13,32 +12,28 @@ public class ImplementationServer extends UnicastRemoteObject implements IServer
     private boolean hasText;
     private String []arrayOfWords;
     private final int numberOfCores = 8;
-    private HashMap<MyWindow,String> methods;
-    private ForkJoinPool forkJoinPool= new ForkJoinPool(numberOfCores);
+    private final ForkJoinPool forkJoinPool= new ForkJoinPool(numberOfCores);
 
 
     public ImplementationServer()throws RemoteException{
         windows = new ArrayList<>();
         arrayOfWords = null;
         hasText = false;
-        methods = new HashMap<>();
     }
 
     @Override
     public void appendTextToServer(String text) throws RemoteException {
-        if(text!=null){
-            if (!text.equals("") && hasText){
-                int conta = 0;
-                String [] temp = Arrays.copyOf(arrayOfWords, arrayOfWords.length + text.split(" ").length);
-                for (int i = arrayOfWords.length; i < temp.length ;conta++, i++) {
-                    temp[i] = text.split(" ")[conta];
-                }
-                arrayOfWords = temp;
+        if (hasText){
+            int conta = 0;
+            String [] temp = Arrays.copyOf(arrayOfWords, arrayOfWords.length + text.split(" ").length);
+            for (int i = arrayOfWords.length; i < temp.length ;conta++, i++) {
+                temp[i] = text.split(" ")[conta];
             }
-            if(!text.equals("") && !hasText){
-                arrayOfWords = text.split(" ");
-                hasText = true;
-            }
+            arrayOfWords = temp;
+        }
+        if(!hasText){
+            arrayOfWords = text.split(" ");
+            hasText = true;
         }
     }
 
@@ -53,8 +48,16 @@ public class ImplementationServer extends UnicastRemoteObject implements IServer
             for (MyWindow window : windows) {
                 if (window.getNameOfTheWindow().equals(nameOfWindow)) {
                     if (method.equals("Sequential")) {
-                        String[] copy = Arrays.copyOf(arrayOfWords, arrayOfWords.length);
+                        String[] copy = arrayOfWords.clone();
                         return sequentialProcess(copy);
+                    }
+                    if (method.equals("Fork")) {
+                        String[] copy = arrayOfWords.clone();
+                        return forkProcess(copy);
+                    }
+                    if (method.equals("Executor")) {
+                        String[] copy = arrayOfWords.clone();
+                        return executorProcess(copy);
                     }
                 }
             }
@@ -69,7 +72,10 @@ public class ImplementationServer extends UnicastRemoteObject implements IServer
 
     @Override
     public void limpiar(String nameOfWindow) throws RemoteException {
-
+        clean();
+        for (MyWindow window : windows) {
+            window.clean();
+        }
     }
     private Data sequentialProcess(String[] array)
     {
@@ -81,7 +87,7 @@ public class ImplementationServer extends UnicastRemoteObject implements IServer
         return new Data(finalTime,array);
     }
 
-    private long executorProcess(String[] array)
+    private Data executorProcess(String[] array)
     {
         // número de hilos que se utilizarán para ordenar
         int wordsPerThread = array.length / numberOfCores;
@@ -100,19 +106,25 @@ public class ImplementationServer extends UnicastRemoteObject implements IServer
 
         WordSort wordSort = new WordSort();
         wordSort.sort(array,0,array.length - 1);
-
-        return System.nanoTime() - startTime;
+        long finalTime = System.nanoTime() - startTime;
+        return new Data(finalTime,array);
     }
 
 
-    private long forkProcess(String[] array)
+    private Data forkProcess(String[] array)
     {
         ForkJoin forkJoin = new ForkJoin(array,0,array.length -1);
         long startTime = System.nanoTime();
         forkJoinPool.invoke(forkJoin);
-        return System.nanoTime() - startTime;
+        long finalTime = System.nanoTime() - startTime;
+        return new Data(finalTime,array);
     }
     private boolean isValid(){
         return arrayOfWords != null;
+    }
+    private void clean(){
+        this.arrayOfWords = null;
+        this.hasText = false;
+
     }
 }

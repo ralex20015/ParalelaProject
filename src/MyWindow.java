@@ -9,7 +9,7 @@ public class MyWindow extends JFrame implements ActionListener {
 
     //private final JTextField txtAmountOfNumbers;
     private JTextArea areaUnorderedWords, areaOrderedWords;
-    private JButton btnAdd, btnSequential, btnForkJoin, btnClean, btnExecuteService, btnSendTextToServer;
+    private JButton btnAdd, btnSequential, btnForkJoin, btnClean, btnExecuteService;
 
     private JLabel lblExecutor, lblFork, lblSequential, lblQuantityOfWords;
     private String [] arrayOfWords;
@@ -41,7 +41,6 @@ public class MyWindow extends JFrame implements ActionListener {
         btnClean = new JButton("Limpiar");
         btnForkJoin = new JButton("Fork/Join");
         btnExecuteService = new JButton("Execute Service");
-        btnSendTextToServer = new JButton("Send Text");
         JLabel label = new JLabel("Texto sin ordenar ");
         JLabel lblOrdenado = new JLabel("Texto ordenado");
         lblOrdenado.setFont(font);
@@ -65,8 +64,6 @@ public class MyWindow extends JFrame implements ActionListener {
         btnForkJoin.setBounds(350 ,580,120,btnForkJoin.getPreferredSize().height);
         btnExecuteService.setBounds(490 ,580,btnExecuteService.getPreferredSize().width + 20,
                 btnExecuteService.getPreferredSize().height);
-        btnSendTextToServer.setBounds(20,620,btnSendTextToServer.getPreferredSize().width + 20,
-                btnSendTextToServer.getPreferredSize().height);
         areaUnorderedWords.setBounds(20,160,270,420);
         areaOrderedWords.setBounds(340,160,270,420);
         areaUnorderedWords.setEditable(false);
@@ -91,12 +88,9 @@ public class MyWindow extends JFrame implements ActionListener {
         btnExecuteService.setActionCommand("Executor");
         btnClean.addActionListener(this);
         btnClean.setActionCommand("Clean");
-        btnSendTextToServer.addActionListener(this);
-        btnSendTextToServer.setActionCommand("Send");
 
         add(label);
         add(btnAdd);
-        add(btnSendTextToServer);
         add(btnSequential);
         add(btnClean);
         add(btnForkJoin);
@@ -128,11 +122,13 @@ public class MyWindow extends JFrame implements ActionListener {
     }
     private void getArray() throws RemoteException {
         if (arrayOfWords == null && server.getCurrentWords() != null){
-            arrayOfWords = Arrays.copyOf(server.getCurrentWords(),server.getCurrentWords().length);
+//            arrayOfWords = Arrays.copyOf(server.getCurrentWords(),server.getCurrentWords().length);
+            arrayOfWords = server.getCurrentWords().clone();
         }
         if (arrayOfWords != null) {
             if (server.getCurrentWords().length > arrayOfWords.length){
-                arrayOfWords = Arrays.copyOf(server.getCurrentWords(),server.getCurrentWords().length);
+//                arrayOfWords = Arrays.copyOf(server.getCurrentWords(),server.getCurrentWords().length);
+                arrayOfWords = server.getCurrentWords().clone();
             }
         }
         setTextOnAreaComponent(areaUnorderedWords,arrayOfWords);
@@ -204,32 +200,37 @@ public class MyWindow extends JFrame implements ActionListener {
                 } catch (RemoteException ex) {
                     throw new RuntimeException(ex);
                 }
-                lblSequential.setText(time);
+                lblFork.setText(time);
             }
-//
+
         if (action.equals("Executor")){
             String time = null;
             try {
                 Data data = server.getResult("Executor",nameOfWindow);
                 time = "<html>Executor<br>"+ data.getTime()+ " ns"+"</html>";
                 setTextOnAreaComponent(areaOrderedWords, data.getArrayOfOrderedWords());
-
             } catch (RemoteException ex) {
                 throw new RuntimeException(ex);
             }
-            lblSequential.setText(time);
+            lblExecutor.setText(time);
         }
 
         if (action.equals("Clean")){
-            clean();
+            try {
+                clean();
+                server.limpiar(nameOfWindow);
+            } catch (RemoteException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
-    public void clean(){
-        cleanAll();
+    public void clean() {
         arrayOfWords = null;
-        lblExecutor.setText("");
+        lblSequential.setText("");
         lblFork.setText("");
         lblExecutor.setText("");
+        cleanAll();
+
     }
     public String getNameOfTheWindow() {
         return nameOfWindow;

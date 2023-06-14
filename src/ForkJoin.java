@@ -12,8 +12,6 @@ public class ForkJoin extends RecursiveAction {
         this.arrayOfWords = a;
         this.startFromWord = lo;
         this.totalWords = hi;
-        System.out.println(lo);
-        System.out.println(hi);
     }
 
     @Override
