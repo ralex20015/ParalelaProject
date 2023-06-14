@@ -103,7 +103,7 @@ public class MyWindow extends JFrame implements ActionListener {
         add(lblQuantityOfWords);
         add(lblOrdenado);
         server.registerWindow(this);
-        serviceForGettingTheArrayOfWords();
+        //serviceForGettingTheArrayOfWords();
     }
 
     private void cleanAll(){
